@@ -2,9 +2,8 @@
 
 To get up and running locally
 ```
+# save .env.local from 1password Eng
 npm i -g vercel
-vercel link
-vercel env pull
 
 npm install
 npm dev
