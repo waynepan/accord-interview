@@ -1,3 +1,26 @@
+# Accord Interview
+
+To get up and running locally
+```
+npm i -g vercel
+vercel link
+vercel env pull
+
+npm install
+npm dev
+```
+
+## Add Questions
+1. Enable the tabs at the top of the Dashboard (currently only All works)
+2. Enable sorting of the products table by any column
+3. Enable the `Add Product` button using whatever UX makes sense to you
+4. Enable a working shopping cart for a customer
+    - Allow adding a product to the cart
+    - Allow removing a product from the cart
+    - Allow checking out (a method that simply logs the cart to the console is fine)
+
+### below is original README
+<hr>
 <div align="center"><strong>Next.js 15 Admin Dashboard Template</strong></div>
 <div align="center">Built with the Next.js App Router</div>
 <br />
