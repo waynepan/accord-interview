@@ -2,11 +2,11 @@
 
 To get up and running locally
 ```
-# save .env.local from 1password Eng
+# save .env.local from 1password Eng Note under "Accord Interview"
 npm i -g vercel
 
 npm install
-npm dev
+npm run dev
 ```
 
 ## Add Questions

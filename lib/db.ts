@@ -11,7 +11,7 @@ import {
   pgEnum,
   serial
 } from 'drizzle-orm/pg-core';
-import { count, eq, ilike } from 'drizzle-orm';
+import { count, eq, ilike, asc, desc } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 
 export const db = drizzle(neon(process.env.POSTGRES_URL!));
@@ -31,39 +31,64 @@ export const products = pgTable('products', {
 export type SelectProduct = typeof products.$inferSelect;
 export const insertProductSchema = createInsertSchema(products);
 
+export type SortField = keyof typeof products.$inferSelect;
+export type SortOrder = 'asc' | 'desc';
+
 export async function getProducts(
   search: string,
-  offset: number
+  offset: number,
+  status?: 'active' | 'inactive' | 'archived',
+  sortField?: SortField,
+  sortOrder: SortOrder = 'asc'
 ): Promise<{
   products: SelectProduct[];
   newOffset: number | null;
   totalProducts: number;
 }> {
-  // Always search the full table, not per page
+  let conditions = [];
+
+  // Build conditions
   if (search) {
-    return {
-      products: await db
-        .select()
-        .from(products)
-        .where(ilike(products.name, `%${search}%`))
-        .limit(1000),
-      newOffset: null,
-      totalProducts: 0
-    };
+    conditions.push(ilike(products.name, `%${search}%`));
+  }
+  if (status) {
+    conditions.push(eq(products.status, status));
   }
 
   if (offset === null) {
     return { products: [], newOffset: null, totalProducts: 0 };
   }
 
-  let totalProducts = await db.select({ count: count() }).from(products);
-  let moreProducts = await db.select().from(products).limit(5).offset(offset);
-  let newOffset = moreProducts.length >= 5 ? offset + 5 : null;
+  // Get total count with filters
+  const totalProducts = await db
+    .select({ value: count() })
+    .from(products)
+    .where(conditions.length > 0 ? conditions[0] : undefined)
+    .then((result) => result[0].value);
+
+  // Build query with conditions, sorting, and pagination
+  const query = db
+    .select()
+    .from(products)
+    .where(conditions.length > 0 ? conditions[0] : undefined)
+    .orderBy(
+      sortField
+        ? sortOrder === 'desc'
+          ? desc(products[sortField])
+          : asc(products[sortField])
+        : products.id
+    )
+    .limit(5)
+    .offset(offset);
+
+  const moreProducts = await query;
+
+  const newOffset = moreProducts.length >= 5 ? offset + 5 : null;
 
   return {
     products: moreProducts,
     newOffset,
-    totalProducts: totalProducts[0].count
+    totalProducts
   };
 }
 

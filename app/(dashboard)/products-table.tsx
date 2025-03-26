@@ -21,6 +21,10 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+import { ArrowUpDown } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { SortField, SortOrder } from '@/lib/db';
+
 export function ProductsTable({
   products,
   offset,
@@ -31,14 +35,29 @@ export function ProductsTable({
   totalProducts: number;
 }) {
   let router = useRouter();
+  let searchParams = useSearchParams();
   let productsPerPage = 5;
+
+  function handleSort(field: SortField) {
+    const currentSort = searchParams.get('sort') as SortField;
+    const currentOrder = searchParams.get('order') as SortOrder;
+
+    const newOrder =
+      currentSort === field && currentOrder === 'asc' ? 'desc' : 'asc';
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('sort', field);
+    params.set('order', newOrder);
+    router.push(`/?${params.toString()}`, { scroll: false });
+  }
 
   function prevPage() {
     router.back();
   }
 
   function nextPage() {
-    router.push(`/?offset=${offset}`, { scroll: false });
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('offset', offset.toString());
+    router.push(`/?${params.toString()}`, { scroll: false });
   }
 
   return (
@@ -56,13 +75,56 @@ export function ProductsTable({
               <TableHead className="hidden w-[100px] sm:table-cell">
                 <span className="sr-only">Image</span>
               </TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden md:table-cell">Price</TableHead>
-              <TableHead className="hidden md:table-cell">
-                Total Sales
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('name')}
+                  className="h-8 flex items-center gap-1"
+                >
+                  Name
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
               </TableHead>
-              <TableHead className="hidden md:table-cell">Created at</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('status')}
+                  className="h-8 flex items-center gap-1"
+                >
+                  Status
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('price')}
+                  className="h-8 flex items-center gap-1"
+                >
+                  Price
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('stock')}
+                  className="h-8 flex items-center gap-1"
+                >
+                  Total Sales
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('availableAt')}
+                  className="h-8 flex items-center gap-1"
+                >
+                  Created at
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -80,7 +142,11 @@ export function ProductsTable({
           <div className="text-xs text-muted-foreground">
             Showing{' '}
             <strong>
-              {Math.max(0, Math.min(offset - productsPerPage, totalProducts) + 1)}-{offset}
+              {Math.max(
+                0,
+                Math.min(offset - productsPerPage, totalProducts) + 1
+              )}
+              -{offset}
             </strong>{' '}
             of <strong>{totalProducts}</strong> products
           </div>
@@ -100,6 +166,7 @@ export function ProductsTable({
               variant="ghost"
               size="sm"
               type="submit"
+              // enabled if more products to show
               disabled={offset + productsPerPage > totalProducts}
             >
               Next
